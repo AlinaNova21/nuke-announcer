@@ -1,0 +1,15 @@
+{
+  "name": "nuke-announcer",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "minimist": "^1.2.0",
+    "moment": "^2.24.0",
+    "screeps-api": "^1.8.0"
+  },
+  "scripts": {
+    "start": "node ."
+  }
+}
