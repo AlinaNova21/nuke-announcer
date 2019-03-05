@@ -59,7 +59,7 @@ async function notify(nuke, shard) {
   const parts = []
   const etaSeconds = Math.floor((eta * shard.tick) / 1000)
   const impact = Math.floor(Math.floor(nuke.landTime / 100) * 100)
-  const diff = Math.floor(etaSeconds * 0.2)
+  const diff = Math.floor(etaSeconds * 0.05)
   const now = Math.floor(Date.now() / 1000)
   const etaEarly = now + etaSeconds - diff
   const etaLate = now + etaSeconds + diff
