@@ -8,7 +8,7 @@ const args = minimist(process.argv.slice(2), {
   default: {
     server: 'main',
     config: 'nuke-announcer',
-    nukeFile: './nukes.json'
+    file: './nukes.json'
   }
 })
 
@@ -17,7 +17,7 @@ let api
 
 async function run() {
   try {
-    const data = JSON.parse(await fs.readFile(args.nukeFile, 'utf8'))
+    const data = JSON.parse(await fs.readFile(args.file, 'utf8'))
     nukes = data
   } catch (err) {
   }
@@ -43,12 +43,12 @@ async function run() {
         cnuke = nuke
         announce = 'Nuclear Launch Detected'
       }
-      cnuke.shard = shard.name
+      cnuke.shard = cnuke.shard || shard.name
       if (stats[cnuke.launchRoomName].own) {
-        cnuke.attacker = users[stats[cnuke.launchRoomName].own.user].username
+        cnuke.attacker = cnuke.attacker || users[stats[cnuke.launchRoomName].own.user].username
       }
       if (stats[cnuke.room].own) {
-        cnuke.defender = users[stats[cnuke.room].own.user].username
+        cnuke.defender = cnuke.defender || users[stats[cnuke.room].own.user].username
       }
       const midway = nuke.landTime - 25000
       const nearLand = nuke.landTime - ((60 * 60 * 1000) / shard.tick)
@@ -70,7 +70,7 @@ async function run() {
       nukes.delete(id)
     }
   }
-  await fs.writeFile(args.nukeFile, JSON.stringify(Array.from(nukes.values())))
+  await fs.writeFile(args.file, JSON.stringify(Array.from(nukes.values())))
 }
 
 async function notify(nuke, shard, type) {
