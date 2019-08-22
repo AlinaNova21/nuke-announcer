@@ -39,16 +39,16 @@ async function run() {
       if (nukes.has(nuke._id)) {
         cnuke = nukes.get(nuke._id)
       } else {
-        nuke.shard = shard.name
-        if (stats[nuke.launchRoomName].own) {
-          nuke.attacker = users[stats[nuke.launchRoomName].own.user].username
-        }
-        if (stats[nuke.room].own) {
-          nuke.defender = users[stats[nuke.room].own.user].username
-        }
         nukes.set(nuke._id, nuke)
         cnuke = nuke
         announce = 'Nuclear Launch Detected'
+      }
+      cnuke.shard = shard.name
+      if (stats[cnuke.launchRoomName].own) {
+        cnuke.attacker = users[stats[cnuke.launchRoomName].own.user].username
+      }
+      if (stats[cnuke.room].own) {
+        cnuke.defender = users[stats[cnuke.room].own.user].username
       }
       const midway = nuke.landTime - 25000
       const nearLand = nuke.landTime - ((60 * 60 * 1000) / shard.tick)
