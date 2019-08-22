@@ -19,7 +19,7 @@ async function run() {
   try {
     const data = JSON.parse(await fs.readFile(args.nukeFile, 'utf8'))
     nukes = data
-  } catch(err) {
+  } catch (err) {
   }
   nukes = new Map(nukes.map(n => [n._id, n]))
   api = await ScreepsAPI.fromConfig(args.server, args.config)
@@ -27,23 +27,42 @@ async function run() {
   const times = {}
   const rates = {}
   const { shards } = await api.raw.game.shards.info()
-  for(const shard of shards) {
+  for (const shard of shards) {
     const { time } = await api.raw.game.time(shard.name)
     shard.time = time
     times[shard.name] = time
     const rooms = new Set([...data[shard.name].map(n => n.room), ...data[shard.name].map(n => n.launchRoomName)])
     const { stats, users } = await api.raw.game.mapStats(Array.from(rooms), 'owner0', shard.name)
-    for(const nuke of data[shard.name]) {
-      if(nukes.has(nuke._id)) continue
-      nuke.shard = shard.name
-      if (stats[nuke.launchRoomName].own) {
-        nuke.attacker = users[stats[nuke.launchRoomName].own.user].username
+    for (const nuke of data[shard.name]) {
+      let announce = false
+      let cnuke
+      if (nukes.has(nuke._id)) {
+        cnuke = nukes.get(nuke._id)
+      } else {
+        nuke.shard = shard.name
+        if (stats[nuke.launchRoomName].own) {
+          nuke.attacker = users[stats[nuke.launchRoomName].own.user].username
+        }
+        if (stats[nuke.room].own) {
+          nuke.defender = users[stats[nuke.room].own.user].username
+        }
+        nukes.set(nuke._id, nuke)
+        cnuke = nuke
+        announce = 'Nuclear Launch Detected'
       }
-      if (stats[nuke.room].own) {
-        nuke.defender = users[stats[nuke.room].own.user].username
+      const midway = nuke.landTime - 25000
+      const nearLand = nuke.landTime - ((60 * 60 * 1000) / shard.tick)
+      if (!cnuke.midwayAnnounced && midway < shard.time) {
+        cnuke.midwayAnnounced = true
+        announce = 'Nuke Reached Midway Point'
       }
-      nukes.set(nuke._id, nuke)
-      await notify(nuke, shard)
+      if (!cnuke.nearLandAnnounced && nearLand < shard.time) {
+        cnuke.nearLandAnnounced = true
+        announce = 'Nuclear Impact Imminent'
+      }
+      if (announce) {
+        await notify(nuke, shard, announce)
+      }
     }
   }
   for (const [id, nuke] of nukes) {
@@ -54,7 +73,7 @@ async function run() {
   await fs.writeFile(args.nukeFile, JSON.stringify(Array.from(nukes.values())))
 }
 
-async function notify(nuke, shard) {
+async function notify(nuke, shard, type) {
   const eta = nuke.landTime - shard.time
   const parts = []
   const etaSeconds = Math.floor((eta * shard.tick) / 1000)
@@ -83,7 +102,7 @@ async function notify(nuke, shard) {
         {
           fallback: text,
           text,
-          title: `Nuclear Launch Detected: ${nuke.shard} ${nuke.room}`,
+          title: `${type}: ${nuke.shard} ${nuke.room}`,
           title_link: `https://screeps.com/a/#!/room/${nuke.shard}/${nuke.room}`,
           color: 'danger',
           ts: now
