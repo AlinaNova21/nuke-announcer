@@ -50,8 +50,8 @@ async function run() {
       if (stats[cnuke.room].own) {
         cnuke.defender = cnuke.defender || users[stats[cnuke.room].own.user].username
       }
-      const midway = nuke.landTime - 25000
-      const nearLand = nuke.landTime - ((60 * 60 * 1000) / shard.tick)
+      const midway = cnuke.landTime - 25000
+      const nearLand = cnuke.landTime - ((60 * 60 * 1000) / shard.tick)
       if (!cnuke.midwayAnnounced && midway < shard.time) {
         cnuke.midwayAnnounced = true
         announce = 'Nuke Reached Midway Point'
@@ -61,7 +61,7 @@ async function run() {
         announce = 'Nuclear Impact Imminent'
       }
       if (announce) {
-        await notify(nuke, shard, announce)
+        await notify(cnuke, shard, announce)
       }
     }
   }
