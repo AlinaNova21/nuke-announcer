@@ -20,50 +20,55 @@ async function run() {
     const data = JSON.parse(await fs.readFile(args.file, 'utf8'))
     nukes = data
   } catch (err) {
+    console.log(`Error reading nukes file: ${err.stack}`)
   }
   nukes = new Map(nukes.map(n => [n._id, n]))
-  api = await ScreepsAPI.fromConfig(args.server, args.config)
-  const { nukes: data } = await api.raw.experimental.nukes()
-  const times = {}
-  const rates = {}
-  const { shards } = await api.raw.game.shards.info()
-  for (const shard of shards) {
-    const { time } = await api.raw.game.time(shard.name)
-    shard.time = time
-    times[shard.name] = time
-    const rooms = new Set([...data[shard.name].map(n => n.room), ...data[shard.name].map(n => n.launchRoomName)])
-    const { stats, users } = await api.raw.game.mapStats(Array.from(rooms), 'owner0', shard.name)
-    for (const nuke of data[shard.name]) {
-      let announce = false
-      let cnuke
-      if (nukes.has(nuke._id)) {
-        cnuke = nukes.get(nuke._id)
-      } else {
-        nukes.set(nuke._id, nuke)
-        cnuke = nuke
-        announce = 'Nuclear Launch Detected'
-      }
-      cnuke.shard = cnuke.shard || shard.name
-      if (stats[cnuke.launchRoomName].own) {
-        cnuke.attacker = cnuke.attacker || users[stats[cnuke.launchRoomName].own.user].username
-      }
-      if (stats[cnuke.room].own) {
-        cnuke.defender = cnuke.defender || users[stats[cnuke.room].own.user].username
-      }
-      const midway = cnuke.landTime - 25000
-      const nearLand = cnuke.landTime - ((60 * 60 * 1000) / shard.tick)
-      if (!cnuke.midwayAnnounced && midway < shard.time) {
-        cnuke.midwayAnnounced = true
-        announce = 'Nuke Reached Midway Point'
-      }
-      if (!cnuke.nearLandAnnounced && nearLand < shard.time) {
-        cnuke.nearLandAnnounced = true
-        announce = 'Nuclear Impact Imminent'
-      }
-      if (announce) {
-        await notify(cnuke, shard, announce)
+  try {
+    api = await ScreepsAPI.fromConfig(args.server, args.config)
+    const { nukes: data } = await api.raw.experimental.nukes()
+    const times = {}
+    const rates = {}
+    const { shards } = await api.raw.game.shards.info()
+    for (const shard of shards) {
+      const { time } = await api.raw.game.time(shard.name)
+      shard.time = time
+      times[shard.name] = time
+      const rooms = new Set([...data[shard.name].map(n => n.room), ...data[shard.name].map(n => n.launchRoomName)])
+      const { stats, users } = await api.raw.game.mapStats(Array.from(rooms), 'owner0', shard.name)
+      for (const nuke of data[shard.name]) {
+        let announce = false
+        let cnuke
+        if (nukes.has(nuke._id)) {
+          cnuke = nukes.get(nuke._id)
+        } else {
+          nukes.set(nuke._id, nuke)
+          cnuke = nuke
+          announce = 'Nuclear Launch Detected'
+        }
+        cnuke.shard = cnuke.shard || shard.name
+        if (stats[cnuke.launchRoomName].own) {
+          cnuke.attacker = cnuke.attacker || users[stats[cnuke.launchRoomName].own.user].username
+        }
+        if (stats[cnuke.room].own) {
+          cnuke.defender = cnuke.defender || users[stats[cnuke.room].own.user].username
+        }
+        const midway = cnuke.landTime - 25000
+        const nearLand = cnuke.landTime - ((60 * 60 * 1000) / shard.tick)
+        if (!cnuke.midwayAnnounced && midway < shard.time) {
+          cnuke.midwayAnnounced = true
+          announce = 'Nuke Reached Midway Point'
+        }
+        if (!cnuke.nearLandAnnounced && nearLand < shard.time) {
+          cnuke.nearLandAnnounced = true
+          announce = 'Nuclear Impact Imminent'
+        }
+        if (announce) {
+          await notify(cnuke, shard, announce)
+        }
       }
     }
+  } catch (err) {
+    console.error(`Error processing shards:`, err)
   }
   for (const [id, nuke] of nukes) {
     if (nuke.landTime < times[nuke.shard]) {
