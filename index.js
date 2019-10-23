@@ -28,7 +28,7 @@ async function run() {
     const { nukes: data } = await api.raw.experimental.nukes()
     const times = {}
     const rates = {}
-    const { shards } = await api.raw.game.shards.info()
+    const { shards } = await getShards(data)
     for (const shard of shards) {
       const { time } = await api.raw.game.time(shard.name)
       shard.time = time
@@ -67,13 +67,13 @@ async function run() {
         }
       }
     }
+    for (const [id, nuke] of nukes) {
+      if (nuke.landTime < times[nuke.shard]) {
+        nukes.delete(id)
+      }
+    }
   } catch (err) {
     console.error(`Error processing shards:`, err)
-  }
-  for (const [id, nuke] of nukes) {
-    if (nuke.landTime < times[nuke.shard]) {
-      nukes.delete(id)
-    }
   }
   await fs.writeFile(args.file, JSON.stringify(Array.from(nukes.values())))
 }
@@ -114,6 +114,20 @@ async function notify(nuke, shard, type) {
         }
       ]
     })
+  }
+}
+
+async function getShards(data) {
+  if (api.isOfficialServer()) {
+    return api.raw.game.shards.info()
+  }
+  const [name] = Object.keys(data)
+  const { tick } = await api.req('GET', '/api/game/tick')
+  return {
+    shards: [{
+      name,
+      tick
+    }]
   }
 }
 
