@@ -51,6 +51,7 @@ async function run() {
         }
         if (stats[cnuke.room].own) {
           cnuke.defender = cnuke.defender || users[stats[cnuke.room].own.user].username
+          cnuke.level = stats[cnuke.room].own.level || ''
         }
         const midway = cnuke.landTime - 25000
         const nearLand = cnuke.landTime - ((60 * 60 * 1000) / shard.tick)
@@ -89,6 +90,10 @@ async function notify(nuke, shard, type) {
   const etaLate = now + etaSeconds + diff
   const etaEarlyText = moment(etaEarly * 1000).format()
   const etaLateText = moment(etaLate * 1000).format()
+  const rcl = nuke.level ? ` (RCL ${nuke.level})` : ''
+  if (process.env.DEBUG) {
+    parts.push('DEBUG MODE')
+  }
   if (nuke.defender) {
     parts.push(`Defender: <https://screeps.com/a/#!/profile/${nuke.defender}|${nuke.defender}>`)
   }
@@ -107,7 +112,7 @@ async function notify(nuke, shard, type) {
         {
           fallback: text,
           text,
-          title: `${type}: ${nuke.shard} ${nuke.room}`,
+          title: `${type}: ${nuke.shard} ${nuke.room}${rcl}`,
           title_link: `https://screeps.com/a/#!/room/${nuke.shard}/${nuke.room}`,
           color: 'danger',
           ts: now
