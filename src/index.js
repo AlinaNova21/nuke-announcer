@@ -47,7 +47,7 @@ const notifiers = [
     async send({ title, text, color, url }) {
       if (!this.channel) return
       const message = new Discord.MessageEmbed()
-      .setTitle(title)
+      .setTitle(`<:nuke:865250606058700802> ${title} <:nuke:865250606058700802>`)
       .setColor(color)
       .setDescription(text)
       .setURL(url)
