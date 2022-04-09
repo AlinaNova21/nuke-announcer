@@ -7,7 +7,7 @@
     "axios": "^0.21.1",
     "discord.js": "^12.5.3",
     "minimist": "^1.2.0",
-    "moment": "^2.24.0",
+    "moment": "^2.29.2",
     "mysql2": "^2.2.5",
     "screeps-api": "^1.8.0",
     "sequelize": "^6.6.2",
